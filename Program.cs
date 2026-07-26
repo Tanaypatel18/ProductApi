@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using myFirstWebApi.Data;
+using myFirstWebApi.Middleware;
 using myFirstWebApi.Repositories;
 using myFirstWebApi.Services;
 using Scalar.AspNetCore;
@@ -13,13 +14,17 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register service
-builder.Services.AddScoped<IProductService, ProductService>();
-
+// Register services — each only once
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
+
+// Global exception handler — must be first
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
+// Request logger
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

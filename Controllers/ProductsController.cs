@@ -60,4 +60,9 @@ public class ProductsController : ControllerBase
 
         return NoContent();
     }
+    [HttpGet("error-test")]
+    public IActionResult TestError()
+    {
+        throw new Exception("This is a test error");
+    }
 }
