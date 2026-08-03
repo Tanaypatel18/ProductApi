@@ -7,9 +7,22 @@ using myFirstWebApi.Repositories;
 using myFirstWebApi.Services;
 using Scalar.AspNetCore;
 using System.Text;
+using Serilog;
+
+// Configure Serilog first — before anything else
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "Logs/app-.log",
+        rollingInterval: RollingInterval.Day,  // new file every day
+        retainedFileCountLimit: 7              // keep last 7 days only
+    )
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -58,6 +71,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
+
+app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {

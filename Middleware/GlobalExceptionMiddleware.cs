@@ -22,7 +22,7 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception occurred");
+            _logger.LogError(ex, "Unhandled exception on {Method} {Path}");
             await HandleExceptionAsync(context, ex);
         }
     }
