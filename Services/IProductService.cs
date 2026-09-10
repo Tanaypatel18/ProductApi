@@ -5,9 +5,9 @@ namespace myFirstWebApi.Services;
 
 public interface IProductService
 {
-    List<Product> GetAll();
-    Product? GetById(int id);
-    Product Create(CreateProductDto dto);
-    Product? Update(int id, UpdateProductDto dto);
-    bool Delete(int id);
+    Task<PagedResultDto<Product>> GetAllAsync(ProductQueryDto query);
+    Task<Product?> GetByIdAsync(int id);
+    Task<Product> CreateAsync(CreateProductDto dto);
+    Task<Product?> UpdateAsync(int id, UpdateProductDto dto);
+    Task<bool> DeleteAsync(int id);
 }

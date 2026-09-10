@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using myFirstWebApi.DTOs;
 using myFirstWebApi.Services;
-using Microsoft.AspNetCore.Authorization;
 
 namespace myFirstWebApi.Controllers;
 
@@ -18,49 +18,49 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] ProductQueryDto query)
     {
-        return Ok(_service.GetAll());
+        var result = await _service.GetAllAsync(query);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var product = _service.GetById(id);
-
+        var product = await _service.GetByIdAsync(id);
         if (product == null)
             return NotFound($"Product with id {id} not found");
 
         return Ok(product);
     }
+
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public IActionResult Create([FromBody] CreateProductDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
     {
-        var product = _service.Create(dto);
+        var product = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public IActionResult Update(int id, [FromBody] UpdateProductDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
     {
-        var product = _service.Update(id, dto);
-        if (product == null) return NotFound($"Product with id {id} not found");
+        var product = await _service.UpdateAsync(id, dto);
+        if (product == null)
+            return NotFound($"Product with id {id} not found");
+
         return Ok(product);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        var result = _service.Delete(id);
-        if (!result) return NotFound($"Product with id {id} not found");
+        var result = await _service.DeleteAsync(id);
+        if (!result)
+            return NotFound($"Product with id {id} not found");
+
         return NoContent();
-    }
-    [HttpGet("error-test")]
-    public IActionResult TestError()
-    {
-        throw new Exception("This is a test error");
     }
 }

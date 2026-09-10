@@ -1,13 +1,14 @@
-﻿using myFirstWebApi.Models;
+﻿using myFirstWebApi.DTOs;
+using myFirstWebApi.Models;
 
 namespace myFirstWebApi.Repositories;
 
 public interface IProductRepository
 {
-    List<Product> GetAll();
-    Product? GetById(int id);
-    Product Create(Product product);
-    Product Update(Product product);
-    bool Delete(int id);
-    void Save();
+    Task<(List<Product> products, int totalCount)> GetAllAsync(ProductQueryDto query);
+    Task<Product?> GetByIdAsync(int id);
+    Task<Product> CreateAsync(Product product);
+    Task<Product> UpdateAsync(Product product);
+    Task<bool> DeleteAsync(int id);
+    Task SaveAsync();
 }

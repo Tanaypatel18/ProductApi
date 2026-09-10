@@ -1,4 +1,6 @@
-﻿using myFirstWebApi.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using myFirstWebApi.Data;
+using myFirstWebApi.DTOs;
 using myFirstWebApi.Models;
 
 namespace myFirstWebApi.Repositories;
@@ -12,32 +14,80 @@ public class ProductRepository : IProductRepository
         _context = context;
     }
 
-    public List<Product> GetAll() =>
-        _context.Products.ToList();
+    public async Task<(List<Product> products, int totalCount)> GetAllAsync(ProductQueryDto query)
+    {
+        // Start with all products
+        var dbQuery = _context.Products.AsQueryable();
 
-    public Product? GetById(int id) =>
-        _context.Products.FirstOrDefault(p => p.Id == id);
+        // Filter by search keyword
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            dbQuery = dbQuery.Where(p =>
+                p.Name.Contains(query.Search) ||
+                p.Description.Contains(query.Search));
+        }
 
-    public Product Create(Product product)
+        // Filter by price range
+        if (query.MinPrice.HasValue)
+            dbQuery = dbQuery.Where(p => p.Price >= query.MinPrice.Value);
+
+        if (query.MaxPrice.HasValue)
+            dbQuery = dbQuery.Where(p => p.Price <= query.MaxPrice.Value);
+
+        // Get total count BEFORE pagination
+        var totalCount = await dbQuery.CountAsync();
+
+        // Sorting
+        dbQuery = query.SortBy?.ToLower() switch
+        {
+            "price" => query.SortOrder == "desc"
+                ? dbQuery.OrderByDescending(p => p.Price)
+                : dbQuery.OrderBy(p => p.Price),
+
+            "stock" => query.SortOrder == "desc"
+                ? dbQuery.OrderByDescending(p => p.Stock)
+                : dbQuery.OrderBy(p => p.Stock),
+
+            "name" => query.SortOrder == "desc"
+                ? dbQuery.OrderByDescending(p => p.Name)
+                : dbQuery.OrderBy(p => p.Name),
+
+            _ => dbQuery.OrderBy(p => p.Id) // default sort
+        };
+
+        // Pagination — skip and take
+        var products = await dbQuery
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        return (products, totalCount);
+    }
+
+    public async Task<Product?> GetByIdAsync(int id) =>
+        await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+
+    public async Task<Product> CreateAsync(Product product)
     {
         _context.Products.Add(product);
         return product;
     }
 
-    public Product Update(Product product)
+    public async Task<Product> UpdateAsync(Product product)
     {
         _context.Products.Update(product);
         return product;
     }
 
-    public bool Delete(int id)
+    public async Task<bool> DeleteAsync(int id)
     {
-        var product = _context.Products.FirstOrDefault(p => p.Id == id);
+        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
         if (product == null) return false;
 
         _context.Products.Remove(product);
         return true;
     }
 
-    public void Save() => _context.SaveChanges();
+    public async Task SaveAsync() =>
+        await _context.SaveChangesAsync();
 }
