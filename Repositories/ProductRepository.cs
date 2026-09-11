@@ -17,8 +17,9 @@ public class ProductRepository : IProductRepository
     public async Task<(List<Product> products, int totalCount)> GetAllAsync(ProductQueryDto query)
     {
         // Start with all products
-        var dbQuery = _context.Products.AsQueryable();
+        //var dbQuery = _context.Products.AsQueryable();
 
+        var dbQuery = _context.Products.Include(p => p.Category).AsQueryable();
         // Filter by search keyword
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -27,6 +28,8 @@ public class ProductRepository : IProductRepository
                 p.Description.Contains(query.Search));
         }
 
+        if (query.CategoryId.HasValue)
+            dbQuery = dbQuery.Where(p => p.CategoryId == query.CategoryId.Value);
         // Filter by price range
         if (query.MinPrice.HasValue)
             dbQuery = dbQuery.Where(p => p.Price >= query.MinPrice.Value);
@@ -65,7 +68,9 @@ public class ProductRepository : IProductRepository
     }
 
     public async Task<Product?> GetByIdAsync(int id) =>
-        await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+        await _context.Products
+            .Include(p => p.Category)  // ← add this
+            .FirstOrDefaultAsync(p => p.Id == id);
 
     public async Task<Product> CreateAsync(Product product)
     {

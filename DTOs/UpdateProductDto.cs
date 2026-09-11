@@ -4,7 +4,7 @@ namespace myFirstWebApi.DTOs;
 
 public class UpdateProductDto
 {
-    [Required(ErrorMessage = "Name is required")]
+    [Required]
     [StringLength(100, MinimumLength = 2)]
     public string Name { get; set; } = string.Empty;
 
@@ -17,4 +17,7 @@ public class UpdateProductDto
 
     [Range(0, int.MaxValue)]
     public int Stock { get; set; }
+
+    [Required]
+    public int CategoryId { get; set; }
 }
